@@ -14,32 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 "use strict";
 
-let Tags = function() {
-    this.DB_TYPE = new Tag("db.type");
-    this.DB_INSTANCE = new Tag("db.instance");
-    this.DB_STATEMENT = new Tag("db.statement");
-    this.URL = new Tag("url");
-    this.HTTP_METHOD = new Tag("http.method");
-};
+const Plugin = require("../plugin");
 
-let Tag = function(key) {
-    this._key = key;
+module.exports = new Plugin("koa-plugin", "koa", [{
+    _name: "",
+    _description: "",
+    _enhanceModules: ["koa"],
+    canEnhance: function(version, enhanceFile) {
+        if (this._enhanceModules.indexOf(enhanceFile) > -1) {
+            return true;
+        }
+        return false;
+    },
+    getInterceptor: function(enhanceFile) {
+        return require("./" + enhanceFile);
+    },
+}]);
 
-    this.tag = function(span, value) {
-        span.tag.apply(span, [this._key, value]);
-    };
-};
-
-
-Tags.instance = null;
-
-Tags.getInstance = function() {
-    if (this.instance === null) {
-        this.instance = new Tags();
-    }
-    return this.instance;
-};
-
-module.exports = Tags.getInstance();
