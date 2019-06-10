@@ -69,6 +69,19 @@ module.exports = function(httpModule, instrumentation, contextManager) {
                 let span = contextManager.createEntrySpan(filterParams(req.url), contextCarrier);
                 span.component(componentDefine.Components.HTTP);
                 span.spanLayer(layerDefine.Layers.HTTP);
+
+                const businessHeaders = {
+                    "p-request-id": "request_id",
+                    "p-page-id": "page_id",
+                    "p-user-id": "user_id",
+                    "p-business-id": "business_id",
+                };
+                for (const key in businessHeaders) {
+                    if (req.headers.hasOwnProperty(key)) {
+                        span.tag(businessHeaders[key], req.headers[key]);
+                    }
+                }
+
                 onFinished(res, function(err) {
                     if (err) {
                         span.errorOccurred();
