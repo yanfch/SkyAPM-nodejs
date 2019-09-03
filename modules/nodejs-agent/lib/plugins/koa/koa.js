@@ -44,19 +44,21 @@ module.exports = function(applicationModule, instrumentation, contextManager) {
      */
     function wrapRespond(origin) {
         return function(ctx) {
-            let runningSpan = ctx[activeContext].span();
-            try {
-                let requestURL = ctx.routerPath || ctx.url;
-                contextManager.rewriteEntrySpanInfo(runningSpan, {
-                    "operationName": requestURL,
-                    "component": componentDefine.Components.KOA,
-                    "spanLayer": layerDefine.Layers.HTTP,
-                });
-                Tags.URL.tag(runningSpan, ctx.url);
-                Tags.HTTP_METHOD.tag(runningSpan, ctx.method);
-            } catch (e) {
-                runningSpan.errorOccurred();
-                runningSpan.log(e);
+            if (ctx.method !== "OPTIONS") {
+                let runningSpan = ctx[activeContext].span();
+                try {
+                    let requestURL = ctx.routerPath || ctx.url;
+                    contextManager.rewriteEntrySpanInfo(runningSpan, {
+                        "operationName": requestURL,
+                        "component": componentDefine.Components.KOA,
+                        "spanLayer": layerDefine.Layers.HTTP,
+                    });
+                    Tags.URL.tag(runningSpan, ctx.url);
+                    Tags.HTTP_METHOD.tag(runningSpan, ctx.method);
+                } catch (e) {
+                    runningSpan.errorOccurred();
+                    runningSpan.log(e);
+                }
             }
             return origin.apply(this, arguments);
         };

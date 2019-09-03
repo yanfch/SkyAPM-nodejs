@@ -66,6 +66,10 @@ module.exports = function(httpModule, instrumentation, contextManager) {
                     return undefined;
                 });
 
+                if (req.method === "OPTIONS") {
+                    return original.apply(this, arguments);
+                }
+
                 let span = contextManager.createEntrySpan(filterParams(req.url), contextCarrier);
                 span.component(componentDefine.Components.HTTP);
                 span.spanLayer(layerDefine.Layers.HTTP);
@@ -117,7 +121,18 @@ module.exports = function(httpModule, instrumentation, contextManager) {
             span.component(componentDefine.Components.HTTP);
             span.spanLayer(layerDefine.Layers.HTTP);
             let result = original.apply(this, arguments);
-            contextManager.finishSpan(span);
+
+            onFinished(result, function(err) {
+                if (err) {
+                    span.errorOccurred();
+                    span.log(err);
+                }
+
+                if (this.statusCode > 400) {
+                    span.errorOccurred();
+                }
+                contextManager.finishSpan(span);
+            });
             return result;
         };
     }
